@@ -14,5 +14,5 @@ Need to download drivers for your Korlan USB2CAN?
 * Here is the [raspberry pi installation guide](https://www.8devices.com/wiki/korlan:compile-raspberry)
 * Here is a [stack overflow post](https://stackoverflow.com/questions/7965437/undefined-reference-to-main-collect2-ld-returned-1-exit-status) that helped me when I faced issues on linux
 
-For the `Resources/helpful_links.txt` file you can either view it manually or add it to your booksmarks via importing/exporting (place them inside your bookmarks.html after you export your current ones, then reimport it).
-Inside it is a list of ~40 links that I personally found useful, but YMMV
+The `Resources/helpful_links.txt` file is a list of websites that I have bookmarked over the course of my research that 
+you may or may nor find useful - depends on what you're looking for.

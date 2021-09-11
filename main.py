@@ -21,6 +21,9 @@ from can.interfaces.usb2can import Usb2canBus
 #           likely is a feature not an error)
 # Right now this code is being written for Windows 10, but I plan on making this work on Linux as well (i.e. raspbian)
 
+# ID for speed is (maybe) 354, 355, or 280 and ID for RPM is 1F9
+# TODO: figure out live torque/horsepower calculation --- can we get crankshaft position and do some angular velocity type physics?
+
 def send_msg(id, data, interface=None):
     '''
     send_msg() uses the 'can' library to send a message to the can bus
@@ -29,7 +32,7 @@ def send_msg(id, data, interface=None):
     :param interface:
     :return:
     '''
-    # TODO: it's possible that this wont find the usb because of the following, non-fatal errors:
+    # NOTE: it's possible that this wont find the usb because of the following, non-fatal errors:
     '''
     Kvaser canlib is unavailable.
     fcntl not available on this platform
