@@ -1,0 +1,10 @@
+aenum==3.1.0
+certifi==2021.5.30
+obd==0.7.1
+Pint==0.7.2
+pyserial==3.5
+python-can==3.3.4
+pyusb==1.2.1
+wincertstore==0.2
+windows-curses==2.2.0
+wrapt==1.12.1
