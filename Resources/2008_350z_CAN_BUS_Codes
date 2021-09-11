@@ -2,6 +2,11 @@
     https://github.com/Knio/carhack/blob/master/Cars/Nissan.markdown
     Also, those ^ are formatted better lmao
 
+    Note to self:
+    In the future, as I get more codes and a better understanding of everything, I will try to make a DBC file using
+    either Vector CANdb++ editor or MATLAB (using the vehicle network toolbox?)
+    https://www.csselectronics.com/pages/can-dbc-file-database-intro
+
 
     ____Notes____
     Thus far, I've decoded the following CAN bus codes for a 2008 Nissan 350z (stock ecu, stock VQ35HR engine)
