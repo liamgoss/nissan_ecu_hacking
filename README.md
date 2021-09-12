@@ -2,6 +2,8 @@
 
 Python code written to utilize the Korlan usb2can hardware to send and receive data over the can-bus on a 2008 Nissan 350z
 
+My goal for this is to be able to read (live) data such as horsepower, engine temps, etc. without a dyno. (I know we can read engine temps without a dyno, but you get what I meant)
+
 I highly recommend checking out the `Resources` directory. There's a 2008 Nissan 350z Service and Repair manual in there as well as can bus codes I've discovered (and a link to more)
 
 The long term goal for this project is to have a display (connected to a raspberry pi that connects to OBDII via usb) in my 350z where the upper center console is (I don't have the NAV model).
