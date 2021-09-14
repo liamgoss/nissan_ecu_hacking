@@ -75,14 +75,14 @@ def send_msg(id, data, interface=None):
           f"{hex(data[6])}, {hex(data[7])}")
     print(f"dec: {data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]}, {data[6]}, {data[7]}")
 
-def calculate_horsepower(speed, time, mass=1505.9267): # Mass (kg) of a base 2008 Nissan 350z, change accordingly if needed
+def calculate_horsepower(final_speed, delta_time, init_speed=0.00):
     '''
     :param speed: in MPH
     :param time: in seconds
     :param mass: in kg
     :return:
     '''
-
+    mass = 1505.9267  # Mass (kg) of a base 2008 Nissan 350z, change accordingly if needed
     # An alternative formula for calculating horsepower is (torque [lb-ft] * RPM) / 5252 but I don't know how to
     #               reliably get live torque data. Maybe I'll introduce another function with some basic estimates?
     # Google says that 90% of the Z's torque (268 lb-ft) is available between 2,000 and 7,000 RPM and that it gets
@@ -99,7 +99,8 @@ def calculate_horsepower(speed, time, mass=1505.9267): # Mass (kg) of a base 200
     #                          time between 2 speeds and not just assuming it starts at 0
 
     # If you can weigh your own car and change this value, that would be ideal, but I cannot so I am using the internet
-    speed = speed / 2.237  # MPH to m/s: divide MPH by 2.237
+    init_speed = init_speed / 2.237  # MPH to m/s: divide MPH by 2.237
+    final_speed = final_speed / 2.237
     # time will be in the correct units [seconds]
     # Avg. HP = (((1/2)mv^2)/t)/746
     # 1/2mv^2 is the kinetic energy of an object; m in kg, v in m/s
@@ -108,10 +109,11 @@ def calculate_horsepower(speed, time, mass=1505.9267): # Mass (kg) of a base 200
     # Gives us a the expression so far (in parentheses) gives us Joules/second which is equivalent to Watts
     # 1 HP = 746 Watts so we divide by 746 to cancel out watts and solve for HP
 
-    init_kinetic_energy = 0.00
-    kinetic_energy = 0.5 * mass * (speed * speed)
-    print(f"Kinetic energy: {kinetic_energy} Joules (J)")
-    watts = kinetic_energy / float(time)
+    init_kinetic_energy = 0.5 * mass * (init_speed * init_speed)
+    final_kinetic_energy = 0.5 * mass * (final_speed * final_speed)
+    delta_kinetic_energy = final_kinetic_energy - init_kinetic_energy
+    #print(f"Kinetic energy: {delta_kinetic_energy} Joules (J)")
+    watts = delta_kinetic_energy / float(delta_time)
     horsepower = watts / 746.00
     horsepower = int(math.ceil(horsepower)) # round up to nearest whole number - could round down but I mean it's an ego thing at this point
     print(f"Horsepower: {horsepower} HP")
@@ -120,13 +122,22 @@ def calculate_horsepower(speed, time, mass=1505.9267): # Mass (kg) of a base 200
 
     return horsepower
 
+def get_metrics():
+    # This function will get the current speed of the car and start a stopwatch at t=0
+    # Then it will go X amount of seconds and grab the final speed, then return this to be fed into calculate_horsepower()
+    # Using ID 280
+    final_speed = 60.0
+    init_speed = 0.0
+    delta_time = 5.0
+    return final_speed, delta_time, init_speed
+
 # Arbitration ID and data must be in the following (hex) format
 id = 0x0000060D
 data = [0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED, 0x69, 0x69] # placeholder hex values
-send_msg(id, data, 'vcan0')
+#send_msg(id, data, 'vcan0')
 
-
-hp = calculate_horsepower(60.0, 5.4)
+final_speed, delta_time, initial_speed, = get_metrics()
+hp = calculate_horsepower(final_speed, delta_time, initial_speed) # final speed, delta time, init speed
 
 # The following code is deprecated code but I am keeping it here in case you find it useful :)
 '''
