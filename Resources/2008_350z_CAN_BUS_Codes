@@ -33,8 +33,8 @@
     ++Codes with Known Purpose++
     0x00000358  01 00 00 00 00 00 00 00 (TOGGLE AC 'AUTO' SETTING OFF)  [observed]
     0x0000035D  C0 50 00 00 00 00 00 00 (TOGGLE AC 'AUTO' SETTING ON)   [observed]
-    0x00000354  00 00 00 00 40 00 04 00 (TOGGLE TCS OFF)                [confirmed]
-    0x00000354  00 00 00 00 00 00 04 00 (TOGGLE TCS ON)                 [confirmed]
+    0x00000354  00 00 00 00 40 00 04 00 (TOGGLE TCS OFF)                [confirmed] - other bytes may relay speed
+    0x00000354  00 00 00 00 00 00 04 00 (TOGGLE TCS ON)                 [confirmed] - other bytes may relay speed
     0x0000060D  06 00 00 00 00 00 20 00 (HOLD HIGH BEAMS ON)            [observed]
     0x0000060D  02 0E 00 00 00 00 20 00 (HOLD HIGH BEAMS OFF / RELEASE) [observed]
     0x00000625  32 30 FF 1C 00 00       (TOGGLE HIGH BEAMS ON)          [observed]
