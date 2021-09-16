@@ -1,7 +1,7 @@
 # This script was written to simplify the output of Wireshark's packet dissection feature (saved as .txt)
 import sys
-filename = 'vroom.txt'  # Your .txt packet dissection file
-hex_value = 54
+filename = 'vroom_full.txt'  # Your .txt packet dissection file
+hex_value = 54  # enter a space as a string if you are not searching for a hex value
 all_lines = []
 lines_with_hex_value = []
 
@@ -18,6 +18,7 @@ if False: # Change this to false after you run it once on a file, it likes to de
             if "STD: " in line:
                 f.write(line[line.index("STD:")+4:])
     sys.exit(0)
+
 
 # The following loop will search all of the codes for those with the hex_value in its data (NOT its ID)
 codes_with_hex = []
