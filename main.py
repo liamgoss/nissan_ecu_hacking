@@ -4,20 +4,24 @@
 # Resources
 # https://python-can.readthedocs.io/en/master/api.html
 # https://python-obd.readthedocs.io/en/latest/
-import sys
-import math
-import can
+
+
+
+import math, time, sys
+from datetime import datetime
 import obd
 import usb.core
 import usb.backend.libusb1
 
-from can.interfaces.usb2can.usb2canabstractionlayer import *
-from can.interfaces.usb2can import Usb2canBus
+# I am fiddling around with modifying the python-can library
+# You should change the below import statements from 'can_custom' to 'can'
+import can_custom as can
+from can_custom.interfaces.usb2can.usb2canabstractionlayer import *
+
 
 # SYS_DEBUG can be set to True if you want to use the logging library to have a very verbose output
-# FUNC_DEBUG is a variable that will be checked in functions and then *certain* tracebacks andprint statements will
+# FUNC_DEBUG is a variable that will be checked in functions and then *certain* tracebacks and print statements will
 #               be executed accordingly
-
 SYS_DEBUG = False
 FUNC_DEBUG = True
 
@@ -25,18 +29,7 @@ if SYS_DEBUG:
     import logging
     logging.basicConfig(level=logging.DEBUG)
 
-
-# The korlan usb2can doesn't like to be detected by this code on Windows 10
-#           Could be a driver issue on my end (it shows up as USB and not a COM port like I would prefer, but that
-#           likely is a feature not an error)
-# Right now this code is being written for Windows 10, but I plan on making this work on Linux as well (i.e. raspbian)
-# UPDATE: It seems that our prayers have been answered and we should be able to use usb2can cross-platform
-#           by using https://github.com/hardbyte/python-can/pull/979
-
-# ID for speed is (maybe) 354, 355, or 280 and ID for RPM is 1F9
-# TODO: figure out live torque/horsepower calculation --- can we get crankshaft position and do some angular velocity type physics?
-
-def send_msg(id, data, interface=None):
+def send_msg(channel, id, data):
     '''
     send_msg() uses the 'can' library to send a message to the can bus
     :param id:
@@ -44,32 +37,17 @@ def send_msg(id, data, interface=None):
     :param interface:
     :return:
     '''
-    # NOTE: it's possible that this wont find the usb because of the following, non-fatal errors:
-    '''
-    Kvaser canlib is unavailable.
-    fcntl not available on this platform
-    libc is unavailable
-    '''
-    # As for the above issue, it could also be due to the library looking for COM ports and not USB
-    interfaces = can.interface.detect_available_configs()
-    print(interfaces)
-    channel = interfaces[0]['channel']
-    # TODO: add interface selection code
-    # TODO: https://github.com/hardbyte/python-can/pull/979 for drivers to use usb2can easily
-    if type(data) == list:
-        print("Type is list")
-    # print(interfaces)
-    # Running on a virtual CAN bus for now since that allows at least a basic test of functionality
-    with can.interface.Bus(bustype='virtual', channel=channel, bitrate=500000) as bus:
-        # data = [0x20, 0x00, 0x1f, 0xbd, 0x00, 0x00, 0x00, 0x00]
+
+    with can.interface.Bus(bustype='usb2can', channel=channel, bitrate=500000) as bus:
         arbitration_id = id
         msg = can.Message(arbitration_id=arbitration_id, data=data, is_extended_id=True)
         try:
             bus.send(msg)
-            print(f"Message sent on virtual {bus.channel_info}")
+            print(f"Message sent on channel {channel}")
         except can.CanError:
             print("Message NOT sent")
             return
+
     print("__{0}/{1} Data__".format('0x' + str(hex(arbitration_id))[2:].zfill(8), arbitration_id))
     print(f"hex: {hex(data[0])}, {hex(data[1])}, {hex(data[2])}, {hex(data[3])}, {hex(data[4])}, {hex(data[5])}, "
           f"{hex(data[6])}, {hex(data[7])}")
@@ -131,51 +109,54 @@ def get_metrics():
     delta_time = 5.0
     return final_speed, delta_time, init_speed
 
+def listen(channel, askUser=False, numCodes=100):
+    '''
+    :param askUser: ~ if True, ask the user for the filename
+    :return:
+    '''
+    bus = can.interface.Bus(bustype='usb2can', channel=channel, bitrate=500000)
+    print(str(bus.state) + '\n' + str(bus.channel_info))
+    if bus.state.value != 1:
+        raise Exception("Your bus is not active!")
+    time.sleep(0.5)
+
+    if askUser:
+        filename = input("Enter the basename (without extension) for file: ")
+        filename = filename + ".log"
+    else:
+        filename = datetime.now().strftime("%Y%m%d-%H%M%S")
+        filename = filename + ".log"
+    print(filename)
+    listener = can.CanutilsLogWriter(filename, channel=channel, append=False)
+
+    if numCodes == 'inf':
+        #raise Exception("Okay, I lied, 'inf' isn't ready yet...")
+        try:
+            while True:
+                listener.on_message_received(bus.recv())
+        except KeyboardInterrupt:
+            listener.stop()  # Doesn't stop loop :(
+    else:
+        i = 0
+        while i < int(numCodes):
+            listener.on_message_received(bus.recv())
+            i = i + 1
+    print("Closing listener...")
+    print(f"Session saved to {filename}")
+    listener.stop()
+
 # Arbitration ID and data must be in the following (hex) format
 id = 0x0000060D
-data = [0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED, 0x69, 0x69] # placeholder hex values
-#send_msg(id, data, 'vcan0')
+data = [0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED, 0x69, 0x69]  # placeholder hex values
+#send_msg(channel='BC0EF943',id,data)
 
-final_speed, delta_time, initial_speed, = get_metrics()
-hp = calculate_horsepower(final_speed, delta_time, initial_speed) # final speed, delta time, init speed
 
-# The following code is deprecated code but I am keeping it here in case you find it useful :)
-'''
-# The vendor and Product ID correspond to the ID's of the usb2can found  in W10 device manager or various linux commands 
-VENDOR_ID = '0483'
-PRODUCT_ID = 1234
+# In order to listen until CTRL+C is pressed, set numCodes='inf'
+# Otherwise, if you want X amount of codes read, set numCodes=X
+listen(channel='BC0EF943', askUser=False, numCodes='inf')
 
-device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
 
-if device is None:
-    raise ValueError("No matching USB device found!")
-print("Device found!")
-usb.core.util.claim_interface(device, 0)
-'''
-'''
-dev = usb.core.find(find_all=True)
-# loop through devices, printing vendor and product ids in decimal and hex
-for cfg in dev:
-  print('Decimal VendorID=' + str(cfg.idVendor) + ' & ProductID=' + str(cfg.idProduct) + '\n')
-  print('Hexadecimal VendorID=' + hex(cfg.idVendor) + ' & ProductID=' + hex(cfg.idProduct) + '\n\n')
-'''
-'''
-ports = obd.scan_serial()
-print(ports)
-obd.logger.setLevel(obd.logging.DEBUG)
-
-connection = obd.OBD()
-
-if connection.is_connected():
-    print("OBD2 connected on {0} using {1}".format(connection.port_name()), connection.protocol_name())
-    print("RPM Reads:")
-
-    rpm = obd.commands.RPM
-    print(rpm)
-else:
-    print("OBD2 not connected...")
-print("Closing connection (if any)")
-connection.close()
-'''
+#final_speed, delta_time, initial_speed, = get_metrics()
+#hp = calculate_horsepower(final_speed, delta_time, initial_speed) # final speed, delta time, init speed
 
 

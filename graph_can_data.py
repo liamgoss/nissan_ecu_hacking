@@ -71,6 +71,7 @@ def get_timestamp(filename, ID):
     return(all_times)
 
 
+
 def createGraph(codes,times, *args):
     # Code is a list of lists of decimal values
     #       EX: [[4, 20, 0, 8, 96, 207, 66, 0], [4, 56, 09, 8, 96, 207, 66, 0],[4, 78, 69, 8, 96, 207, 66, 0]]
@@ -257,7 +258,7 @@ for msg in codes:
     # For each code, change all the hex bytes to decimal
     vals.append(codeToDecimalValues(msg))
 # Get all of time timestamps for the corresponding codes collected
-times = get_timestamp("vroom_full_unsorted.txt", "0x000001f9")
+times = get_timestamp(r"C:\Users\liam\Documents\vroom_full_unsorted.txt", "0x000001f9")
 # Graph the specified byte change in with respect to time
 
 createGraph(vals, times, 0, 1, 2, 3, 4, 5, 6, 7)
